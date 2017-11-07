@@ -1,0 +1,2 @@
+# DeepCNNpractice
+personal practice
