@@ -1,3 +1,17 @@
+# Copyright 2015 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
 """Builds the CIFAR-10 network.
 
 Summary of available functions:
@@ -41,7 +55,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size',type=int, default=128,
                     help='Number of images to process in a batch.')
 
-parser.add_argument('--data.dir', type=str, default='/tmp/cifar10_data',
+parser.add_argument('--data_dir', type=str, default='/tmp/cifar10_data',
                     help='Path to the CIFAR-10 data directory.')
 parser.add_argument('--use_fp16', type=bool, default=False,
                     help='Train the model using fp16.')
@@ -379,11 +393,11 @@ def maybe_download_and_extract():
 
     """
 
-    dest_diractory = FLAGS.data_dir
-    if not os.path.exists(dest_diractory):
-        os.makedirs(dest_diractory)
+    dest_directory = FLAGS.data_dir
+    if not os.path.exists(dest_directory):
+        os.makedirs(dest_directory)
     filename = DATA_URL.split('/')[-1] #cifar-10-binary.tar.gz
-    filepath = os.path.join(dest_diractory, filename)
+    filepath = os.path.join(dest_directory, filename)
     if not os.path.exists(filepath):
         def _progress(count, block_size, total_size):
             sys.stdout.write('\r>> Downloading %s %.1f%%'%(filename,float(count*block_size) / float(total_size)
@@ -393,9 +407,9 @@ def maybe_download_and_extract():
         print()
         statinfo = os.stat(filepath)
         print('Successfully douwnloaded', filename, statinfo.st_size, 'bytes.')
-    extracted_dir_path = os.path.join(dest_diractory, 'cifar-10-batches-bin')
+    extracted_dir_path = os.path.join(dest_directory, 'cifar-10-batches-bin')
     if not os.path.exists(extracted_dir_path):
-        tarfile.open(filepath, 'r:gz').extractall(dest_diractory)
+        tarfile.open(filepath, 'r:gz').extractall(dest_directory)
 
 
 
