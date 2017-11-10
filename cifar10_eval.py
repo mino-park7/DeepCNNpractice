@@ -57,7 +57,7 @@ parser.add_argument('--eval_interval_secs', type=int, default=60*5,
                     help='How often to run the eval.')
 parser.add_argument('--num_examples', type=int, default=10000,
                     help='Number of examples to run.')
-parser.add_argument('--run_once', type=bool, default=False,
+parser.add_argument('--run_once', type=bool, default=True,
                     help='Whether to run eval only once.')
 
 def eval_once( saver, summary_writer, top_k_op, summary_op):
@@ -98,13 +98,14 @@ def eval_once( saver, summary_writer, top_k_op, summary_op):
             step = 0
             while step < num_iter and not coord.should_stop():
                 predictions = sess.run([top_k_op])
+                print(predictions)
                 true_count += np.sum(predictions)
                 step += 1
 
             # Compute precision @ 1.
             precision = true_count / total_sample_count
             print('%s: precision @ 1 = %.3f' %(datetime.now(), precision))
-
+            print('true:%.3f , total:%.3f'%(true_count,total_sample_count))
             summary = tf.Summary()
             summary.ParseFromString(sess.run(summary_op))
             summary.value.add(tag='Precision @ 1', simple_value = precision)
