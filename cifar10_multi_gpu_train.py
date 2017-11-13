@@ -164,8 +164,51 @@ def train():
             for i in range(FLAGS.num_gpus):
                 with tf.device('/gpu:%d' % i):
                     with tf.name_scope('%s_%d' %(cifar10.TOWER_NAME, i)) as scope:
-                        
+                        # Dequeues one batch for the GPU
+                        image_batch, label_batch = batch_queue.dequeue()
+                        # Calculate the loss for one tower of the CIFAR model. This function
+                        # constucts the entire CIFAR model but shares the variables across
+                        # all towers.
+                        loss = tower_loss(scope, image_batch, label_batch)
 
+                        # Reuse variables for the next tower.
+                        tf.get_variable_scope().reuse_variables()
+
+                        # Retain the summaries from the final tower.
+                        summaries = tf.get_collection(tf.GraphKeys.SUMMARIES, scope)
+
+                        #Calculate the gradients for the batch of data on this CIFAR tower.
+                        grads = opt.compute_gradients(loss)
+
+                        # Keep track of the gradients across all towers.
+                        tower_grads.append(grads)
+
+        # We must calculate the mean of each gradient. Note that this is the
+        # synchronization point across all towers.
+        grads = average_gradients(tower_grads)
+
+        # Add a summary to track the learning rate.
+        summaries.append(tf.summary.scalar('learning_rate', lr))
+
+        # Add hisograms for gradients.
+        for grad, var in grads:
+            if grad is not None:
+                summaries.append(tf.summary.histogram(var.op.name + '/gradients', grad))
+
+        # Apply the gradients to adjust the shared variables.
+        apply_gradient_op = opt.apply_gradients(grads, global_step=global_step)
+
+        # Add histograms for trainable variables.
+        for var in tf.trainable_variables():
+            summaries.append(tf.summary.histogram(var.op.name, var))
+
+        # Track the moving averages of all trainable variables.
+        variable_averages = tf.train.ExponentialMovingAverage(
+            cifar10.MOVING_AVERAGE_DECAY, global_step)
+        variables_averages_op = variable_averages.apply(tf.trainable_variables())
+
+        # Group all updates to into a single train op.
+        train_op = tf.grou
 
 
 
