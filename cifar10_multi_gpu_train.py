@@ -208,11 +208,62 @@ def train():
         variables_averages_op = variable_averages.apply(tf.trainable_variables())
 
         # Group all updates to into a single train op.
-        train_op = tf.grou
+        train_op = tf.group(apply_gradient_op, variables_averages_op)
 
+        # Create a saver.
+        saver = tf.train.Saver(tf.global_variables())
 
+        # Build the summary operation from the last tower summaries.
+        summary_op = tf.summary.merge(summaries)
 
+        # Build an initialization operation to run below.
+        init = tf.global_variables_initializer()
 
+        # Start running operations on the Graph. allow_soft_placement must be set to
+        # True to build towers on GPU, as some of the ops do not have GPU implementations
+        sess = tf.Session(config=tf.ConfigProto(
+            allow_soft_placement=True,
+            log_device_placement=FLAGS.log_device_placement
+        ))
+        sess.run(init)
+
+        # Start the queue runners.
+        tf.train.start_queue_runners(sess=sess)
+
+        summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
+
+        for step in range(FLAGS.max_steps):
+            start_time = time.time()
+            _, loss_value = sess.run([train_op, loss])
+            duration = time.time() -start_time
+
+            assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
+
+            if step % 10 == 0:
+                num_examples_per_step = FLAGS.batch_size * FLAGS.num_gpus
+                examples_per_sec =num_examples_per_step/ duration
+                sec_per_batch = duration / FLAGS.num_gpus
+
+                format_str = ('%s: step %d, loss = %.2f (%.1f examples/sec; %.3f'
+                              'sec/batch')
+                print(format_str %(datetime.now(), step, loss_value,
+                                   examples_per_sec, sec_per_batch))
+
+            if step % 100 == 0:
+                summary_str = sess.run(summary_op)
+                summary_writer.add_summary(summary_str, step)
+
+            # Save the model checkpoint periodically.
+            if step % 1000 == 0 or (step+1) == FLAGS.max_steps:
+                checkpoint_path = os.path.join(FLAGS.train_dir+'/multiGPU/', 'model.ckpt')
+                saver.save(sess, checkpoint_path, global_step=step)
+
+def main(argv=None):
+    cifar10.maybe_download_and_extract()
+    if tf.gfile.Exists(FLAGS.train_dir):
+        tf.gfile.DeleteRecursively(FLAGS.train_dir)
+    tf.gfile.MakeDirs(FLAGS.train_dir)
+    train()
 
 
 if __name__ == '__main__':
