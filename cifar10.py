@@ -60,7 +60,7 @@ parser.add_argument('--data_dir', type=str, default='/tmp/cifar10_data',
 parser.add_argument('--use_fp16', type=bool, default=False,
                     help='Train the model using fp16.')
 
-FLAGS = parser.parse_args()
+
 
 # Global constants describing the CIFAR-10 data set.
 IMAGE_SIZE = cifar10_input.IMAGE_SIZE
@@ -412,7 +412,8 @@ def maybe_download_and_extract():
         tarfile.open(filepath, 'r:gz').extractall(dest_directory)
 
 
-
+if __name__ == "__main__":
+    FLAGS = parser.parse_args()
 
 
 

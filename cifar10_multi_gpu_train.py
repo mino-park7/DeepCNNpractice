@@ -269,4 +269,5 @@ def main(argv=None):
 
 if __name__ == '__main__':
     FLAGS = parser.parse_args()
+    cifar10.FLAGS = parser.parse_args()
     tf.app.run()

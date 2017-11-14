@@ -117,6 +117,7 @@ def main(argv=None): #pylint : disable=unused-argument
 
 if __name__ == '__main__':
     FLAGS = parser.parse_args()
+    cifar10.FLAGS = parser.parse_args()
     tf.app.run()
 
 
