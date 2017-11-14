@@ -37,7 +37,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import argparse
+import argparse # CmdLine 툴의 Argv처리 라이브러리
 import os
 import re
 import sys
