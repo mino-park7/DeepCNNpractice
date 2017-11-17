@@ -70,9 +70,11 @@ def tower_loss(scope, images, labels):
 
     # Build the portion of the Graph calculating the losses. Note that we will
     # assemble the total_loss using a custom function below.
+    # 해당 스코프 내의 값만 get 하기위해 get_collection으로 losses를 정의
     _ = cifar10.loss(logits, labels)
 
     # Assemble all of the losses for the current tower only.
+    # 해당 scope(한 tower내) 에서 losses를 get_collection 해옴. (cifar10.py에서 모델 내에 losses가 정의되어 있음)
     losses = tf.get_collection('losses', scope)
 
     # Calculate the total loss for the current tower.
@@ -84,7 +86,7 @@ def tower_loss(scope, images, labels):
         # Remove 'tower_[0_9]/' from the name in case this is a multi-GPU training
         # session. This helps the clarity of presentation on tensorboard.
         loss_name = re.sub('%s_[0-9]*' % cifar10.TOWER_NAME, '', l.op.name)
-        tf.summary.scalar(loss_name, 1)
+        tf.summary.scalar(loss_name, l)
 
     return total_loss
 
@@ -106,9 +108,11 @@ def average_gradients(tower_grads):
         # Note that each grad_and_vars looks like the following:
         #   ((grad0_gpu0, var0_gpu0), ... , (grad0_gpuN, var0_gpuN))
         grads = []
+        # g : grad0_gpu0, ..., grad0_gpuN, _ : var0_gpu0, ... , var0_gpuN
         for g, _ in grad_and_vars:
             # Add 0 dimension to the gradients to represent the tower.
-            expanded_g = tf.expand_dims(g, 0)
+            # tf.expand_dims(a,b) : a tensor의 b위치에 dimension 하나 늘림
+            expanded_g = tf.expand_dims(g, 0) # ->
 
             # Append on a 'tower' dimension which we will average over below.
             grads.append(expanded_g)
@@ -120,6 +124,8 @@ def average_gradients(tower_grads):
         # Keep in mind that the Variables are redundant because they are shared
         # across towers. So .. we will just return the first tower's pointer to
         # the Variable
+        # 타워마다 모든 vars는 다 같으니깐, 첫번째 타워의 vars만 가져와서 grad_and_var에
+        # 다시 저장시키고 average_grads에 append 시키고 리턴
         v = grad_and_vars[0][1]
         grad_and_var = (grad, v)
         average_grads.append(grad_and_var)
@@ -157,6 +163,7 @@ def train():
         # Get images and labels for CIFAR-10.
         images, labels = cifar10.distorted_inputs()
         batch_queue = tf.contrib.slim.prefetch_queue.prefetch_queue(
+            # capacity : queue를 얼마나 많이 쌓아 놓을 것인가? 아마도 넉넉잡아서 gpu갯수 2배로 한듯함(gpu가 데이터를 처리하므로)
             [images, labels], capacity=2 * FLAGS.num_gpus
         )
         # Calculate the gradients for each model tower.

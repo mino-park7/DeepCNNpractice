@@ -94,6 +94,7 @@ def _activation_summary(x):
     # session. This helps the clarity of presentation on tensorboard.
     tensor_name = re.sub('%s_[0-9]*/'%TOWER_NAME,'',x.op.name)
     tf.summary.histogram(tensor_name+'/activations',x)
+    #tf.nn.zero_fraction(tensor) -> 해당 텐서중에 0값의 비율 (sparsity)
     tf.summary.scalar(tensor_name+'/sparsity',tf.nn.zero_fraction(x))
 
 
@@ -373,9 +374,13 @@ def train(total_loss, global_step):
 
     # Generate moving averages of all losses and associated summaries.
     loss_averages_op = _add_loss_summaries(total_loss)
-
+    # Optimizer 사용법 : 기본적으로 ~Optimizer.minimize(loss)를 하면 자동으로 해주지만, 중간에 원하는 연산이 필요 할때에는
+        # opt = tf.train.GradientDescentOptimizer(learning_rate)로 optimizer 객체 생성
+        # opt.compute_gradients(loss)로 gradient 계산 ( return: list of (gradient, variable) pair)
+        # opt.apply_gradients()로 minimize 적용
+    # 이 code에서는 중간에 gradients와 trainable variables를 tensorboard summary에 저장시키기 위해서 중간과정 사용)
     # Compute gradients.
-    with tf.control_dependencies([loss_averages_op]):
+    with tf.control_dependencies([loss_averages_op]): #tf.control_dependencies() -> 얘 먼저 계산하고, 뒤에것들 계산한다
         opt = tf.train.GradientDescentOptimizer(lr)
         grads = opt.compute_gradients(total_loss)
 

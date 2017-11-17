@@ -99,10 +99,12 @@ def train():
 
         with tf.train.MonitoredTrainingSession(
             checkpoint_dir=FLAGS.train_dir,
+            # hooks : Optional list of SessionRunHook objects, hooks input을 통해 cli 위에 log를 남겨줌
             hooks=[tf.train.StopAtStepHook(last_step=FLAGS.max_steps),
                    tf.train.NanTensorHook(loss),
                    _LoggerHook()],
             config=tf.ConfigProto(
+                #log_device_placement를 True로 설정하면 각 Tensor와 Op가 어디서 계산되고 있는지 볼 수 있음
                 log_device_placement=FLAGS.log_device_placement)) as mon_sess:
             while not mon_sess.should_stop():
                 mon_sess.run(train_op)
